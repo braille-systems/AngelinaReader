@@ -346,7 +346,7 @@ def char_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_
         fp = sum(rec_is_false)
         fn = len(gt_is_correct) - tp
 
-        if verbose==3 and (fp or fn):
+        if verbose==3 and (fp or fn) and img:
              draw = PIL.ImageDraw.Draw(img)
              has_false = False
              has_missed = False

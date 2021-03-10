@@ -21,15 +21,14 @@ params = AttrDict(
         class_as_6pt=False,    # классификация присутствия каждой точки в рамке отдельно
         #load_front_side=True,    # load recto side
         #load_reverse_side=True,  # load revers side
-        batch_size = 12,
+        batch_size = 6, # with batch size 12 my GPU runs out of memory
         net_hw = (416, 416),
         rect_margin = 0.3, #  every of 4 margions to char width
         max_std = 0.1,
         train_list_file_names = [
-            r'DSBI/data/train_li2.txt',
-            r'DSBI/data/val_li2.txt',
-            r'AngelinaDataset/pseudo/step_'+pseudo_step+'_opt_'+pseudo_opt+'/books/train.txt',
-            r'AngelinaDataset/pseudo/step_'+pseudo_step+'_opt_'+pseudo_opt+'/handwritten/train.txt',
+            r'DSBI/data/train.txt',
+            r'AngelinaDataset/books/train.txt',
+            r'AngelinaDataset/handwritten/train.txt',
             r'AngelinaDataset/not_braille/train.txt',
         ],
         val_list_file_names = {
@@ -47,7 +46,7 @@ params = AttrDict(
             #      r'AngelinaDataset/handwritten/val.txt',
             # ],
             'DSBI': [
-                r'DSBI/data/test_li2.txt',
+                r'DSBI/data/test.txt',
             ]
         },
         scores_filter=((5, 0.64), (25, 0.81)),  # quantile % : score_threshold
@@ -77,7 +76,7 @@ params = AttrDict(
             class_loss_scale = 100,
         ),
     ),
-    load_model_from = 'NN_results/pseudo3.3_scores-0.67-0.77_ignore-0.25-0.77_05091c/models/best.t7',  # retina_chars_d58e5f # retina_chars_7e1d4e
+    # load_model_from = 'NN_results/pseudo3.3_scores-0.67-0.77_ignore-0.25-0.77_05091c/models/best.t7',  # retina_chars_d58e5f # retina_chars_7e1d4e
     optim = 'torch.optim.Adam',
     optim_params = AttrDict(
         lr=0.00001,

@@ -26,7 +26,7 @@ import model.validate_retinanet as validate_retinanet
 
 if settings.findLR:
     params.model_name += '_findLR'
-params.save(can_overwrite=settings.can_overwrite)
+params.save(can_overwrite=settings.can_overwrite, create_dirs=True)
 
 
 ctx = ovotools.pytorch.Context(settings=None, params=params, eval_func=lambda x: eval(x))
