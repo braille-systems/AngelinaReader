@@ -33,18 +33,20 @@ A modification of [IlyaOvodov/AngelinaReader](https://github.com/IlyaOvodov/Ange
     
     (on Windows)
     
-    **Note:** to work on this project, you need to re-activate the environment every time.
+    **Note:** to work on this project, you need to re-activate the environment every time you restart the machine or open a new terminal session.
     To verify that you've successfully activated the environment, run `which python` (or `where python` on Windows).
     You should see `<...>\AngelinaReader\env\Scripts\python.exe` on Windows (and something alike on other platforms) at the top of the list.
 1. Install the dependencies:
     ```
-   python -m pip install -r requirements.txt
-   python -m pip install -r model/requirements.txt
+   python -m pip install --upgrade pip
+   pip install torch===1.5.0 torchvision===0.6.0 -f https://download.pytorch.org/whl/torch_stable.html
+   pip install -r requirements.txt
+   pip install -r model/requirements.txt
    ```
 
 ## Running pre-trained inference
 
-To verify that you've done everything correctly, you may launch a pre-trained model:
+To ensure that you've done everything correctly, you may launch a pre-trained model:
 
 ``` 
 wget -O weights/model.t7 http://angelina-reader.ovdv.ru/retina_chars_eced60.clr.008

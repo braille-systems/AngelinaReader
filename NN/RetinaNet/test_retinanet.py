@@ -6,7 +6,7 @@
 # âû÷èñëåíèå symmetric_best_dice
 
 # In[1]:
-
+from pathlib import Path
 
 from ovotools.params import AttrDict
 import sys
@@ -18,7 +18,7 @@ from os.path import join
 model_name = "NN_results/retina_chars_b24228"
 model_fn = join(local_config.data_path, model_name)
 
-params = AttrDict.load(model_fn + ".param.txt", verbose=True)
+params = AttrDict.load(Path(model_fn) / "param.txt", verbose=True)
 model_fn += "/models/02500.t7"
 # params.data.net_hw = (416, 416) #(512,768) ###### (1024,1536) #
 params.data.batch_size = 1  #######
