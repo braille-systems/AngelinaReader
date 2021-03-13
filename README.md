@@ -12,12 +12,12 @@ A modification of [IlyaOvodov/AngelinaReader](https://github.com/IlyaOvodov/Ange
 - Python 3.6-3.8
 
 # Setup for development
+## Installation
 1. Run from the command line (MacOS / Linux / CygWin / Msys2):
     ```
     git clone --recursive https://github.com/braille-systems/AngelinaReader.git
     cd AngelinaReader
     git clone --recursive https://github.com/braille-systems/brl_ocr.git
-    wget -O weights/model.t7 http://angelina-reader.ovdv.ru/retina_chars_eced60.clr.008
     python -m pip install --upgrade pip
     python -m pip install virtualenv
     python -m venv env
@@ -41,14 +41,28 @@ A modification of [IlyaOvodov/AngelinaReader](https://github.com/IlyaOvodov/Ange
    python -m pip install -r requirements.txt
    python -m pip install -r model/requirements.txt
    ```
-1. Execute the file:
+
+## Running pre-trained inference
+
+To verify that you've done everything correctly, you may launch a pre-trained model:
+
+``` 
+wget -O weights/model.t7 http://angelina-reader.ovdv.ru/retina_chars_eced60.clr.008
+python run_local.py brl_ocr\data\unlabeled\golubina\IMG_2503.JPG
+```
+
+## Training
+
+Execute the file:
     ```
     python model/train.py
     ```
    If you're getting CUDA errors, you may change `device="cuda:0"` to `device="cpu"` in `model/params.py`
    
    This will run for a while. Results will appear under `NN_results` folder.
+   
+## Labels
 
+See [brl_ocr/README.md#working-with-labels](https://github.com/braille-systems/brl_ocr#working-with-labels).
 
-# Training
-
+It's OK to install labelme in the same environment as other dependencies in this project.
