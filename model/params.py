@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import local_config
 from ovotools import AttrDict
 
@@ -30,20 +32,20 @@ params = AttrDict(
         rect_margin=0.3,  #  every of 4 margions to char width
         max_std=0.1,
         train_list_file_names=[
-            r"DSBI/data/train.txt",
-            r"AngelinaDataset/books/train.txt",
-            r"AngelinaDataset/handwritten/train.txt",
-            r"AngelinaDataset/not_braille/train.txt",
+            r"brl_ocr/DSBI/data/train.txt",
+            r"brl_ocr/AngelinaDataset/books/train.txt",
+            r"brl_ocr/AngelinaDataset/handwritten/train.txt",
+            r"brl_ocr/AngelinaDataset/not_braille/train.txt",
         ],
         val_list_file_names={
             #'test' :  [r'DSBI/data/test_li2.txt',],
             "books": [
-                r"AngelinaDataset/books/val.txt",
-                r"E:\Users\vzuev\github-braillesystems\brl_ocr\data\labeled\books\val.txt"
+                r"brl_ocr/AngelinaDataset/books/val.txt",
+                r"brl_ocr/data/labeled/books/val.txt"
                 # r'AngelinaDataset/handwritten/val.txt',
             ],
             "hand": [
-                r"AngelinaDataset/books/val.txt",
+                r"brl_ocr/AngelinaDataset/books/val.txt",
                 # r'AngelinaDataset/handwritten/val.txt',
             ],
             # 'two': [
@@ -51,7 +53,7 @@ params = AttrDict(
             #      r'AngelinaDataset/handwritten/val.txt',
             # ],
             "DSBI": [
-                r"DSBI/data/test.txt",
+                r"brl_ocr/DSBI/data/test.txt",
             ],
         },
         scores_filter=((5, 0.64), (25, 0.81)),  # quantile % : score_threshold

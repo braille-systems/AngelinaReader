@@ -5,44 +5,50 @@
 [![Code Coverage](https://codecov.io/gh/braille-systems/AngelinaReader/branch/develop/graph/badge.svg)](https://codecov.io/gh/braille-systems/topological-sorting)
 [![CodeFactor](https://www.codefactor.io/repository/github/braille-systems/angelinareader/badge/develop)](https://www.codefactor.io/repository/github/braille-systems/angelinareader/overview/develop)
 
-Draft version. Production version will be at https://github.com/IlyaOvodov/AngelinaReader (under construction)
+A modification of [IlyaOvodov/AngelinaReader](https://github.com/IlyaOvodov/AngelinaReader)
+
+# Requirements
+- Git with Git LFS
+- Python 3.6-3.8
+
+# Setup for development
+1. Run from the command line (MacOS / Linux / CygWin / Msys2):
+    ```
+    git clone --recursive https://github.com/braille-systems/AngelinaReader.git
+    cd AngelinaReader
+    git clone --recursive https://github.com/braille-systems/brl_ocr.git
+    wget -O weights/model.t7 http://angelina-reader.ovdv.ru/retina_chars_eced60.clr.008
+    python -m pip install --upgrade pip
+    python -m pip install virtualenv
+    python -m venv env
+    ```
+    Substitute `python` with your system's Python3 command, which may be `python`, `py` or `python3`
+1. Activate a virtual environment: 
+    
+    ```source env/bin/activate``` 
+    
+    (on Linux/MacOs) or 
+    
+    ```.\env\Scripts\activate``` 
+    
+    (on Windows)
+    
+    **Note:** to work on this project, you need to re-activate the environment every time.
+    To verify that you've successfully activated the environment, run `which python` (or `where python` on Windows).
+    You should see `<...>\AngelinaReader\env\Scripts\python.exe` on Windows (and something alike on other platforms) at the top of the list.
+1. Install the dependencies:
+    ```
+   python -m pip install -r requirements.txt
+   python -m pip install -r model/requirements.txt
+   ```
+1. Execute the file:
+    ```
+    python model/train.py
+    ```
+   If you're getting CUDA errors, you may change `device="cuda:0"` to `device="cpu"` in `model/params.py`
+   
+   This will run for a while. Results will appear under `NN_results` folder.
 
 
-# requirements
+# Training
 
- ubuntu, windows with GPU  
-
- CUDA  
- Python 3.6  
- PyTorch 1.4  
- torchvision  
- ignite  
- numpy  
- PIL  
- albumentations  
- cv2  
- https://github.com/IlyaOvodov/pytorch-retinanet  
- https://github.com/IlyaOvodov/OvoTools  
- https://github.com/IlyaOvodov/labelme  (for annotation)
-
-# installation
-
-```
-git clone https://github.com/IlyaOvodov/BrailleV0.git
-edit BrailleV0/local_config.py to set data_path and global_3rd_party pointing to current dir
-git clone https://github.com/IlyaOvodov/OvoTools.git
-cd OvoTools
-python setup.py develop
-cd ..
-git clone https://github.com/IlyaOvodov/pytorch-retinanet.git pytorch_retinanet
-download model https://yadi.sk/d/GW0qEmA5rL0m0A into ./NN_saved/retina_chars_eced60/models/clr.008
-```
-
-# usage
-```
-cd BrailleV0/web-app
-python angelina_reader_app.py
-access it by 127.0.0.1:5000
-```
-
-or edit `if __name__=="__main__"` section BrailleV0/NN/RetinaNet/infer_retinanet.py. Set img_filename_mask and results_dir to proper values and run it.

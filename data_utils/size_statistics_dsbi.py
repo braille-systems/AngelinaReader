@@ -3,7 +3,6 @@
 """
 Строит гистрограмму размеров рамок
 """
-import json
 import numpy as np
 from pathlib import Path
 
