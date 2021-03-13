@@ -9,7 +9,6 @@ except:
     pass
 import os
 import json
-import glob
 import shutil
 import sys
 import local_config
@@ -20,15 +19,12 @@ from ovotools.params import AttrDict
 import numpy as np
 from collections import OrderedDict
 import torch
-import time
 import copy
-from pathlib import Path
 import PIL.ImageDraw
 import PIL.ImageFont
 from pathlib import Path
 import zipfile
 import data_utils.data as data
-import braille_utils.letters as letters
 import braille_utils.label_tools as lt
 from model import create_model_retinanet
 import braille_utils.postprocess as postprocess

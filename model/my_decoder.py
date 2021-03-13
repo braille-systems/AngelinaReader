@@ -1,6 +1,6 @@
 """Encode object boxes and labels."""
 import math
-from typing import List, Tuple, Union
+from typing import List, Tuple
 from torch import Tensor
 import torch
 import pytorch_retinanet.encoder

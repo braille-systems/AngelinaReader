@@ -27,12 +27,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r model/requirements.txt
+          wget -O weights/model.t7 http://angelina-reader.ovdv.ru/retina_chars_eced60.clr.008
       - name: Static checks
         # to auto-format the code, run from the root folder: `black --line-length 120 .`
         # `black` checks are included in `flake8` analysis, because `flake8-black` is listed in `model/requirements.txt`
         run: flake8 # flake8 settings in [ROOT]/tox.ini # TODO add type checks (mypy)
       - name: Test with pytest & calculate coverage
-        run: coverage run --source=. -m pytest && coverage xml -o $OUT_PATH/coverage/coverage.xml
+        run: coverage run --source=. -m pytest && coverage xml -o $OUT_PATH/coverage/coverage.xml # TODO fix tests
         if: success() || failure() # run even if the previous step fails
       - name: Generate HTML code coverage report & display report in console
         run: coverage html -d $OUT_PATH/coverage && coverage report

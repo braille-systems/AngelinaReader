@@ -8,16 +8,14 @@ from flask_login import LoginManager, current_user, login_user, logout_user, log
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField,
-    PasswordField,
     BooleanField,
     SubmitField,
     FileField,
-    TextAreaField,
     HiddenField,
     SelectField,
 )
 from wtforms.validators import DataRequired
-from flask_uploads import UploadSet, configure_uploads, IMAGES, ARCHIVES
+from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_mobility import Mobility
 from flask_mobility.decorators import mobile_template
 
@@ -29,7 +27,6 @@ import smtplib
 import time
 import os
 import json
-import sys
 import argparse
 from pathlib import Path
 import local_config

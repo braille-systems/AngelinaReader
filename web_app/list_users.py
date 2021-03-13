@@ -2,10 +2,8 @@
 # -*- coding: UTF-8 -*-
 from flask import Flask
 
-import time
 import os
 import json
-import sys
 from config import Config
 
 app = Flask(__name__)

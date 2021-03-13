@@ -1,6 +1,4 @@
-import os
 import torch
-import numpy as np
 
 from pytorch_retinanet.loss import FocalLoss
 from pytorch_retinanet.retinanet import RetinaNet

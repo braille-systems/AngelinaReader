@@ -14,10 +14,9 @@ import torch
 import ignite
 from ignite.engine import Events
 from pathlib import Path
-from torch.optim.lr_scheduler import ReduceLROnPlateau, MultiStepLR
+from torch.optim.lr_scheduler import MultiStepLR # TODO find why doesn't work withouot this import
 
 import ovotools.ignite_tools
-import ovotools.pytorch_tools
 import ovotools.pytorch
 
 from data_utils import data
