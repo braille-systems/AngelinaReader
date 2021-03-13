@@ -1,9 +1,9 @@
 # Angelina braille reader
 
-[![Actions Status](https://github.com/zuevval/AngelinaReader/workflows/Python%20CI/badge.svg)](https://github.com/zuevval/topological-sorting/actions)
+[![Actions Status](https://github.com/braille-systems/AngelinaReader/workflows/Python%20CI/badge.svg)](https://github.com/braille-systems/topological-sorting/actions)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Code Coverage](https://codecov.io/gh/zuevval/AngelinaReader/branch/develop/graph/badge.svg)](https://codecov.io/gh/zuevval/topological-sorting)
-[![CodeFactor](https://www.codefactor.io/repository/github/zuevval/angelinareader/badge/develop)](https://www.codefactor.io/repository/github/zuevval/angelinareader/overview/develop)
+[![Code Coverage](https://codecov.io/gh/braille-systems/AngelinaReader/branch/develop/graph/badge.svg)](https://codecov.io/gh/braille-systems/topological-sorting)
+[![CodeFactor](https://www.codefactor.io/repository/github/braille-systems/angelinareader/badge/develop)](https://www.codefactor.io/repository/github/braille-systems/angelinareader/overview/develop)
 
 Draft version. Production version will be at https://github.com/IlyaOvodov/AngelinaReader (under construction)
 
