@@ -11,7 +11,7 @@ from config import Config
 app = Flask(__name__)
 app.config.from_object(Config)
 
-users_file = app.config['DATA_ROOT'] + '/all_users.json'
+users_file = app.config["DATA_ROOT"] + "/all_users.json"
 if os.path.isfile(users_file):
     with open(users_file) as f:
         all_users = json.load(f)

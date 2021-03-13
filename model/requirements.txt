@@ -4,3 +4,12 @@ torchvision==0.6.0 # pip install torch===1.5.0 torchvision===0.6.0 -f https://do
 pytorch-ignite
 tensorboardX
 Levenshtein
+
+# testing
+pytest
+coverage
+
+# linters, formatters
+black
+flake8-black
+mypy

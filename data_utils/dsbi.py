@@ -6,12 +6,21 @@ Utils for DSBI dataset (https://github.com/yeluo1994/DSBI)
 import collections
 from braille_utils import label_tools as lt
 
-CellInfo = collections.namedtuple('CellInfo', 
-                                  ['row', 'col',  # row and column in a symbol grid
-                                   'left', 'top', 'right', 'bottom',  # symbol corner coordinates in pixels
-                                   'label'])  # symbol label either like '246' or '010101' format
+CellInfo = collections.namedtuple(
+    "CellInfo",
+    [
+        "row",
+        "col",  # row and column in a symbol grid
+        "left",
+        "top",
+        "right",
+        "bottom",  # symbol corner coordinates in pixels
+        "label",
+    ],
+)  # symbol label either like '246' or '010101' format
 
-def read_txt(file_txt, binary_label = True):
+
+def read_txt(file_txt, binary_label=True):
     """
     Loads Braille annotation from DSBI annotation txt file
     :param file_txt: filename of txt file
@@ -25,37 +34,35 @@ def read_txt(file_txt, binary_label = True):
     )
     None, None, None, None for empty annotation
     """
-    with open(file_txt, 'r') as f:
+    with open(file_txt, "r") as f:
         l = f.readlines()
         if len(l) < 3:
             return None, None, None, None
         angle = eval(l[0])
-        v_lines = list(map(eval, l[1].split(' ')))
-        assert len(v_lines)%2 == 0, (file_txt, len(v_lines))
-        h_lines = list(map(eval, l[2].split(' ')))
-        assert len(h_lines)%3 == 0, (file_txt, len(h_lines))
+        v_lines = list(map(eval, l[1].split(" ")))
+        assert len(v_lines) % 2 == 0, (file_txt, len(v_lines))
+        h_lines = list(map(eval, l[2].split(" ")))
+        assert len(h_lines) % 3 == 0, (file_txt, len(h_lines))
         cells = []
         for cell_ln in l[3:]:
-            cell_nums = list(cell_ln[:-1].split(' ')) # exclude last '\n'
+            cell_nums = list(cell_ln[:-1].split(" "))  # exclude last '\n'
             assert len(cell_nums) == 8, (file_txt, cell_ln)
             row = eval(cell_nums[0])
             col = eval(cell_nums[1])
             if binary_label:
-                label = ''.join(cell_nums[2:])
+                label = "".join(cell_nums[2:])
             else:
-                label = ''
+                label = ""
                 for i, c in enumerate(cell_nums[2:]):
-                    if c == '1':
-                        label += str(i+1)
+                    if c == "1":
+                        label += str(i + 1)
                     else:
-                        assert c == '0', (file_txt, cell_ln, i, c)
-            left = v_lines[(col-1)*2]
-            right = v_lines[(col-1)*2+1]
-            top = h_lines[(row-1)*3]
-            bottom = h_lines[(row-1)*3+2]
-            cells.append(CellInfo(row=row, col=col,
-                                  left=left, top=top, right=right, bottom=bottom,
-                                  label=label))
+                        assert c == "0", (file_txt, cell_ln, i, c)
+            left = v_lines[(col - 1) * 2]
+            right = v_lines[(col - 1) * 2 + 1]
+            top = h_lines[(row - 1) * 3]
+            bottom = h_lines[(row - 1) * 3 + 2]
+            cells.append(CellInfo(row=row, col=col, left=left, top=top, right=right, bottom=bottom, label=label))
     return angle, h_lines, v_lines, cells
 
 
@@ -83,7 +90,7 @@ def read_DSBI_annotation(label_filename, width, height, rect_margin, get_points)
                 w = int((cl.right - cl.left) * rect_margin)
                 h = w
                 for i in range(6):
-                    if cl.label[i] == '1':
+                    if cl.label[i] == "1":
                         iy = i % 3
                         ix = i - iy
                         if ix == 0:
@@ -100,14 +107,18 @@ def read_DSBI_annotation(label_filename, width, height, rect_margin, get_points)
                         top, bottom = yc - h, yc + h
                         rects.append([left / width, top / height, right / width, bottom / height, 0])
         else:
-            rects = [(
-                (c.left - rect_margin * (c.right - c.left)) / width,
-                (c.top - rect_margin * (c.right - c.left)) / height,
-                (c.right + rect_margin * (c.right - c.left)) / width,
-                (c.bottom + rect_margin * (c.right - c.left)) / height,
-                lt.label010_to_int(c.label),
-                1.0  # score, DSBI can not be auto-generated
-                ) for c in cells if c.label != '000000']
+            rects = [
+                (
+                    (c.left - rect_margin * (c.right - c.left)) / width,
+                    (c.top - rect_margin * (c.right - c.left)) / height,
+                    (c.right + rect_margin * (c.right - c.left)) / width,
+                    (c.bottom + rect_margin * (c.right - c.left)) / height,
+                    lt.label010_to_int(c.label),
+                    1.0,  # score, DSBI can not be auto-generated
+                )
+                for c in cells
+                if c.label != "000000"
+            ]
     else:
         rects = []
     return rects
