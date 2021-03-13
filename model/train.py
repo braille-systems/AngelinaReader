@@ -4,6 +4,8 @@
 Trains model using parameters and setting defined in model.params
 Results are stored in local_config.data_path / params.model_name
 """
+import rootpath
+rootpath.append()
 import local_config
 import sys
 
