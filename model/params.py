@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import local_config
 from ovotools import AttrDict
 

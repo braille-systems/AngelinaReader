@@ -33,7 +33,7 @@ datasets = {
     #                 r'DSBI\data\train.txt',
     #              ],
     # 'DSBI_test': [
-    #                 r'DSBI\data\test.txt',
+    #                 r'DSBI\data\debug.txt',
     #               ],
     #'val': [r'DSBI/data/val_li2.txt', ],
     "dsbi": [
@@ -93,7 +93,7 @@ def prepare_data(datasets=datasets):
                     rects = None
                     lbl_fn = full_fn.rsplit(".", 1)[0] + ".json"
                     if os.path.isfile(lbl_fn):
-                        rects = data.read_LabelMe_annotation(label_filename=lbl_fn, get_points=False)
+                        rects = data.read_labelme_annotation(label_filename=lbl_fn, get_points=False)
                     else:
                         lbl_fn = full_fn.rsplit(".", 1)[0] + ".txt"
                         if os.path.isfile(lbl_fn):

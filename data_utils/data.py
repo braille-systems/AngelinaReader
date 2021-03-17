@@ -7,6 +7,9 @@ class BrailleDataset: loads indexed dataset from DSBI dataset or LabelMe annotat
 import os
 import random
 import json
+from enum import Enum
+from typing import Sequence, Tuple, Any, Optional
+
 import PIL
 import numpy as np
 import albumentations
@@ -15,6 +18,7 @@ import albumentations.augmentations.functional as albu_f
 import torch
 import torchvision.transforms.functional as F
 import cv2
+from ovotools import AttrDict
 
 from data_utils import dsbi
 from braille_utils import label_tools as lt
@@ -39,15 +43,23 @@ def rect_hflip(b):
     return b[:4] + (lt.label_hflip(b[4]),) + b[5:]
 
 
-def common_aug(mode, params):
+class AugMode(Enum):
     """
-    :param mode: 'train', 'test', 'inference'
-    :param params:
+    Augmentation mode
+    """
+    train = "train"
+    debug = "debug"
+    inference = "inference"
+
+
+def common_aug(mode: AugMode, params: AttrDict):
+    """
+    :param mode: 'train', 'debug', 'inference'
+    :param params: augmentation parameters
     """
     # aug_params = params.get('augm_params', dict())
     augs_list = []
-    assert mode in {"train", "debug", "inference"}
-    if mode == "train":
+    if mode == AugMode.train:
         augs_list.append(
             albumentations.PadIfNeeded(
                 min_height=params.data.net_hw[0],
@@ -64,11 +76,11 @@ def common_aug(mode, params):
                 T.Rotate(limit=params.augmentation.rotate_limit, border_mode=cv2.BORDER_CONSTANT, always_apply=True)
             )
         # augs_list.append(T.OpticalDistortion(border_mode=cv2.BORDER_CONSTANT)) - can't handle boundboxes
-    elif mode == "debug":
+    elif mode == AugMode.debug:
         augs_list.append(
             albumentations.CenterCrop(height=params.data.net_hw[0], width=params.data.net_hw[1], always_apply=True)
         )
-    if mode != "inference":
+    if mode != AugMode.inference:
         if params.augmentation.get("blur_limit", 4):
             augs_list.append(T.Blur(blur_limit=params.augmentation.get("blur_limit", 4)))
         if params.augmentation.get("RandomBrightnessContrast", True):
@@ -91,11 +103,11 @@ class ImagePreprocessor:
     """
 
     def __init__(self, params, mode):
-        assert mode in {"train", "debug", "inference"}
+        assert mode in [e.value for e in AugMode], "invalid parameter value: augmentation mode"
         self.params = params
         self.albumentations = common_aug(mode, params)
 
-    def preprocess_and_augment(self, img, rects=[]):
+    def preprocess_and_augment(self, img, rects: Sequence[tuple] = ()):
         aug_img = self.random_resize_and_stretch(
             img,
             new_width_range=self.params.augmentation.img_width_range,
@@ -107,7 +119,7 @@ class ImagePreprocessor:
         aug_bboxes = [
             b
             for b in aug_bboxes
-            if b[0] > 0 and b[0] < 1 and b[1] > 0 and b[1] < 1 and b[2] > 0 and b[2] < 1 and b[3] > 0 and b[3] < 1
+            if 0 < b[0] < 1 and 0 < b[1] < 1 and 0 < b[2] < 1 and 0 < b[3] < 1
         ]
         if not self.params.data.get("get_points", False):
             for t in aug_res["replay"]["transforms"]:
@@ -400,7 +412,7 @@ class BrailleSubDataset:
                 self.params.data.get("get_points", False),
             )
         elif ext == "json":
-            return read_LabelMe_annotation(label_filename, self.params.data.get("get_points", False))
+            return read_labelme_annotation(label_filename, self.params.data.get("get_points", False))
         else:
             raise ValueError("unsupported label file type: " + ext)
 
@@ -420,7 +432,7 @@ def limiting_scaler(source, dest):
     return scale
 
 
-def read_LabelMe_annotation(label_filename, get_points):
+def read_labelme_annotation(label_filename: str, get_points=None):
     """
     Reads LabelMe (see https://github.com/IlyaOvodov/labelme labelling tool) annotation JSON file.
     :param label_filename: path to LabelMe annotation JSON file
@@ -430,7 +442,7 @@ def read_LabelMe_annotation(label_filename, get_points):
     """
     if get_points:
         raise NotImplementedError("read_annotation get_point mode not implemented for LabelMe annotation")
-    with open(label_filename, "r", encoding="utf8") as opened_json:
+    with open(label_filename, encoding="utf8") as opened_json:
         loaded = json.load(opened_json)
     convert_x = limiting_scaler(loaded["imageWidth"], 1.0)
     convert_y = limiting_scaler(loaded["imageHeight"], 1.0)

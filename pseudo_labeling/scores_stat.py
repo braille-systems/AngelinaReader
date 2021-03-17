@@ -19,7 +19,7 @@ for fn in files:
     rects = None
     lbl_fn = full_fn.with_suffix(".json")
     assert lbl_fn.is_file(), lbl_fn
-    rects = data.read_LabelMe_annotation(label_filename=lbl_fn, get_points=False)
+    rects = data.read_labelme_annotation(label_filename=lbl_fn, get_points=False)
     if rects is not None:
         boxes = [r[:4] for r in rects]
         labels = [r[4] for r in rects]
