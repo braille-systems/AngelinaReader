@@ -64,9 +64,13 @@ params = AttrDict(
         ),  # 768*0.8, 1536*1.2  ,550, 1150,   810, 890
         stretch_limit=0.1,
         rotate_limit=5,
+        ShiftScaleRotate=True,
+        Perspective=True,
+        Affine=True,
         # blur_limit = 0,
         # RandomBrightnessContrast = False,
         # JpegCompression = False,
+
     ),
     model="retina",
     model_params=AttrDict(

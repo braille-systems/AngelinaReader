@@ -36,7 +36,7 @@ def test_recognizer_pipeline():  # testing code from recognizer's __init__() and
     # a possible scenario for `__init__()`
     params = AttrDict.load(params_fn="../weights/param.txt")  # TODO create issue in OvoTools
     inference_width = 850
-    params.data.net_hw = (inference_width, inference_width)  # TODO what is it? Input image width & height?
+    params.data.net_hw = (inference_width, inference_width)  # minimal height and width (padded if less than this)
     params.data.batch_size = 1
     params.augmentation = AttrDict(
         img_width_range=(inference_width, inference_width),

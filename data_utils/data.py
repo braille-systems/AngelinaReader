@@ -52,14 +52,16 @@ class AugMode(Enum):
     inference = "inference"
 
 
-def common_aug(mode: AugMode, params: AttrDict):
+def common_aug(mode: str, params: AttrDict):
     """
     :param mode: 'train', 'debug', 'inference'
     :param params: augmentation parameters
     """
     # aug_params = params.get('augm_params', dict())
+    feasible_modes = [e.value for e in AugMode]
+    assert mode in feasible_modes, "incorrect `mode`: must be one of: " + " ".join(feasible_modes)
     augs_list = []
-    if mode == AugMode.train:
+    if mode == AugMode.train.value:
         augs_list.append(
             albumentations.PadIfNeeded(
                 min_height=params.data.net_hw[0],
@@ -75,8 +77,22 @@ def common_aug(mode: AugMode, params: AttrDict):
             augs_list.append(
                 T.Rotate(limit=params.augmentation.rotate_limit, border_mode=cv2.BORDER_CONSTANT, always_apply=True)
             )
-        # augs_list.append(T.OpticalDistortion(border_mode=cv2.BORDER_CONSTANT)) - can't handle boundboxes
-    elif mode == AugMode.debug:
+
+        """
+        *Would be nice, but unable to use:*
+        - RandomSizedBBoxSafeCrop (incompatible with ReplayCompose)
+        - RandomCropNearBBox: requires a particular bounding box
+        - OpticalDistortion (incompatible with bounding boxes)
+        - ElasticTransform (incompatible with bounding boxes)
+        """
+        for param_name, transform in (
+                ("ShiftScaleRotate", T.ShiftScaleRotate(rotate_limit=0, always_apply=True)),
+                ("Perspective", albumentations.IAAPerspective()),
+                ("Affine", albumentations.IAAAffine(always_apply=True))):
+            if params.augmentation.get(param_name, True):
+                augs_list.append(transform)
+
+    elif mode == AugMode.debug.value:
         augs_list.append(
             albumentations.CenterCrop(height=params.data.net_hw[0], width=params.data.net_hw[1], always_apply=True)
         )
