@@ -10,8 +10,6 @@ from pathlib import Path
 import local_config
 import model.infer_retinanet as infer_retinanet
 
-model_weights = "model.t7"
-
 parser = argparse.ArgumentParser(description="Angelina Braille Reader: optical Braille text recognizer .")
 
 parser.add_argument("input", type=str, help="File(s) to be processed: image, pdf or zip file or directory name")
@@ -28,6 +26,11 @@ parser.add_argument(
     "-o", "--orient", action="store_false", help="Don't find orientation, use original file orientation"
 )
 parser.add_argument("-2", dest="two", action="store_true", help="Process 2 sides")
+parser.add_argument("--weights_file", type=str, default="weights/model.t7",
+                    help=" (Optional) path to weights for RetinaNet")
+parser.add_argument("--param_file", type=str, default="weights/param.txt",
+                    help="(Optional) path to params for RetinaNet")
+parser.add_argument("--save_dev", action="store_false", help="Save development info (pseudo-labels, log)")
 
 args = parser.parse_args()
 
@@ -36,8 +39,8 @@ if not Path(args.input).exists():
     exit()
 
 recognizer = infer_retinanet.BrailleInference(
-    params_fn=os.path.join(local_config.data_path, "weights", "param.txt"),
-    model_weights_fn=os.path.join(local_config.data_path, "weights", model_weights),
+    params_fn=os.path.join(local_config.data_path, args.param_file),
+    model_weights_fn=os.path.join(local_config.data_path, args.weights_file),
     create_script=None,
 )
 
@@ -54,7 +57,7 @@ if Path(args.input).is_dir():
         align_results=True,
         process_2_sides=args.two,
         repeat_on_aligned=False,
-        save_development_info=False,
+        save_development_info=args.save_dev,
     )
 else:
     results_dir = args.results_dir or Path(args.input).parent
@@ -70,7 +73,7 @@ else:
             align_results=True,
             process_2_sides=args.two,
             repeat_on_aligned=False,
-            save_development_info=False,
+            save_development_info=args.save_dev,
         )
     elif Path(args.input).suffix.lower() in (".jpg", ".jpe", ".jpeg", ".png", ".gif", ".svg", ".bmp"):
         recognizer.run_and_save(
@@ -85,7 +88,7 @@ else:
             align_results=True,
             process_2_sides=args.two,
             repeat_on_aligned=False,
-            save_development_info=False,
+            save_development_info=args.save_dev,
         )
     else:
         print("Incorrect file extention: " + Path(args.input).suffix + " . Only images, .pdf and .zip files allowed")

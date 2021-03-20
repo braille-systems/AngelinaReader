@@ -53,6 +53,9 @@ params = AttrDict(
             "DSBI": [
                 r"brl_ocr/DSBI/data/test.txt",
             ],
+            "plates": [
+                r"brl_ocr/data/labeled/plates/val.txt"
+            ]
         },
         scores_filter=((5, 0.64), (25, 0.81)),  # quantile % : score_threshold
         target_metric="books:f1",
