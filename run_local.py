@@ -30,7 +30,7 @@ parser.add_argument("--weights_file", type=str, default="weights/model.t7",
                     help=" (Optional) path to weights for RetinaNet")
 parser.add_argument("--param_file", type=str, default="weights/param.txt",
                     help="(Optional) path to params for RetinaNet")
-parser.add_argument("--save_dev", action="store_false", help="Save development info (pseudo-labels, log)")
+parser.add_argument("--save_dev", action="store_true", help="Save development info (pseudo-labels, log)")
 
 args = parser.parse_args()
 
