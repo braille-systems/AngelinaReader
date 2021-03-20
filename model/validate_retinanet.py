@@ -4,54 +4,17 @@
 evaluate levenshtein distance as recognition error for dataset using various model(s)
 """
 
-# Для отладки
-verbose = 3
-inference_width = 850
-cls_thresh = 0.5
-nms_thresh = 0.02
-LINE_THR = 0.6
-iou_thr = 0.5
-do_filter_lonely_rects = False
-metrics_for_lines = False
-show_filtered = False
-
-models = [
-    # ('NN_results/dsbi_lay3_100_225fc0', 'models/clr.032.t7'),
-    ("NN_results/dsbi_fpn1_lay4_1000_b67b68", "models/best.t7"),
-    # ('NN_results/angelina_fpn1_lay3_100_noaug_7c2028', 'models/best.t7'),
-    # ('NN_results/angelina_fpn1_lay3_100_noaug2_f14849', 'models/best.t7'),
-    # ('NN_results/dsbi_lay3_100_225fc0', 'models/best.t7'),
-]
-
-model_dirs = [
-    # ('NN_results/dsbi_fpn1_lay3_100_ea2e5c', 'models/*.t7'),
-    # ('NN_results/angelina_fpn1_lay3_100_noaug_7c2028', 'models/*.t7'),
-]
-
-datasets = {
-    # 'DSBI_train': [
-    #                 r'DSBI\data\train.txt',
-    #              ],
-    # 'DSBI_test': [
-    #                 r'DSBI\data\debug.txt',
-    #               ],
-    #'val': [r'DSBI/data/val_li2.txt', ],
-    "dsbi": [
-        r"DSBI/data/test_li2.txt",
-    ],
-    #'Angelina':[r'AngelinaDataset/books/val.txt', r'AngelinaDataset/handwritten/val.txt'],
-    #'An-books': [r'AngelinaDataset/books/val.txt'],
-    #'An-hands': [r'AngelinaDataset/handwritten/val.txt'],
-}
-
-lang = "RU"
-
 import os
 import sys
-import Levenshtein
+import time
 from pathlib import Path
+from typing import Dict, List, Tuple
+
+import Levenshtein
 import PIL
 import torch
+
+from pytorch_retinanet.retinanet import RetinaNet
 
 sys.path.append(r"../..")
 sys.path.append("../NN/RetinaNet")
@@ -62,15 +25,8 @@ import braille_utils.postprocess as postprocess
 import model.infer_retinanet as infer_retinanet
 from braille_utils import label_tools
 
-rect_margin = 0.3
 
-for md in model_dirs:
-    models += [
-        (str(md[0]), str(Path("models") / m.name)) for m in sorted((Path(local_config.data_path) / md[0]).glob(md[1]))
-    ]
-
-
-def prepare_data(datasets=datasets):
+def prepare_data(datasets: Dict[str, List[str]], rect_margin: float = .3, lang: str = "RU") -> dict:
     """
     data (datasets defined above as global) -> dict: key - list of dict (image_fn":full image filename, "gt_text": groundtruth pseudotext, "gt_rects": groundtruth rects + label 0..64)
     :return:
@@ -124,19 +80,19 @@ def prepare_data(datasets=datasets):
                         lines = postprocess.boxes_to_lines(
                             boxes, labels, scores=scores, lang=lang, filter_lonely=False, min_align_score=0
                         )
-                        gt_text = lines_to_pseudotext(lines)
+                        gt_text = _lines_to_pseudotext(lines)
                         data_list.append({"image_fn": full_fn, "gt_text": gt_text, "gt_rects": rects})
     return res_dict
 
 
-def label_to_pseudochar(label):
+def _label_to_pseudochar(label):
     """
     int (0..63) - str ('0' .. 'o')
     """
     return chr(ord("0") + label)
 
 
-def lines_to_pseudotext(lines):
+def _lines_to_pseudotext(lines):
     """
     lines (list of postprocess.Line) -> pseudotext (multiline '\n' delimetered, int labels converted to pdeudo chars)
     """
@@ -146,19 +102,19 @@ def lines_to_pseudotext(lines):
             out_text.append("")
         s = ""
         for ch in ln.chars:
-            s += " " * ch.spaces_before + label_to_pseudochar(ch.label)
+            s += " " * ch.spaces_before + _label_to_pseudochar(ch.label)
         out_text.append(s)
     return "\n".join(out_text)
 
 
-def pseudo_char_to_label010(ch):
+def _pseudo_char_to_label010(ch):
     lbl = ord(ch) - ord("0")
     label_tools.validate_int(lbl)
     label010 = label_tools.int_to_label010(lbl)
     return label010
 
 
-def count_dots_lbl(lbl):
+def _count_dots_lbl(lbl):
     n = 0
     label010 = label_tools.int_to_label010(lbl)
     for c01 in label010:
@@ -169,12 +125,12 @@ def count_dots_lbl(lbl):
     return n
 
 
-def count_dots_str(s):
+def _count_dots_str(s):
     n = 0
     for ch in s:
         if ch in " \n":
             continue
-        label010 = pseudo_char_to_label010(ch)
+        label010 = _pseudo_char_to_label010(ch)
         for c01 in label010:
             if c01 == "1":
                 n += 1
@@ -183,32 +139,32 @@ def count_dots_str(s):
     return n
 
 
-def dot_metrics(res, gt):
+def _dot_metrics(res, gt):
     tp = 0
     fp = 0
     fn = 0
     opcodes = Levenshtein.opcodes(res, gt)
     for op, i1, i2, j1, j2 in opcodes:
         if op == "delete":
-            fp += count_dots_str(res[i1:i2])
+            fp += _count_dots_str(res[i1:i2])
         elif op == "insert":
-            fn += count_dots_str(gt[j1:j2])
+            fn += _count_dots_str(gt[j1:j2])
         elif op == "equal":
-            tp += count_dots_str(res[i1:i2])
+            tp += _count_dots_str(res[i1:i2])
         elif op == "replace":
             res_substr = res[i1:i2].replace(" ", "").replace("\n", "")
             gt_substr = gt[j1:j2].replace(" ", "").replace("\n", "")
             d = len(res_substr) - len(gt_substr)
             if d > 0:
-                fp += count_dots_str(res_substr[-d:])
+                fp += _count_dots_str(res_substr[-d:])
                 res_substr = res_substr[:-d]
             elif d < 0:
-                fn += count_dots_str(gt_substr[d:])
+                fn += _count_dots_str(gt_substr[d:])
                 gt_substr = gt_substr[:d]
             assert len(res_substr) == len(gt_substr)
             for i, res_i in enumerate(res_substr):
-                res010 = pseudo_char_to_label010(res_i)
-                gt010 = pseudo_char_to_label010(gt_substr[i])
+                res010 = _pseudo_char_to_label010(res_i)
+                gt010 = _pseudo_char_to_label010(gt_substr[i])
                 for p in range(6):
                     if res010[p] == "1" and gt010[p] == "0":
                         fp += 1
@@ -222,7 +178,7 @@ def dot_metrics(res, gt):
     return tp, fp, fn
 
 
-def filter_lonely_rects(boxes, labels, img):
+def _filter_lonely_rects(boxes, labels, img):
     dx_to_h = 2.35  # расстояние от края до центра 3го символа
     res_boxes = []
     res_labels = []
@@ -250,9 +206,9 @@ def filter_lonely_rects(boxes, labels, img):
     return res_boxes, res_labels
 
 
-def dot_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_rects):
+def _dot_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_rects, iou_thr: float):
     if do_filter_lonely_rects:
-        boxes, labels = filter_lonely_rects(boxes, labels, img)
+        boxes, labels = _filter_lonely_rects(boxes, labels, img)
     gt_labels = [r[4] for r in gt_rects]
     gt_rec_labels = [-1] * len(gt_rects)  # recognized label for gt, -1 - missed
     rec_is_false = [1] * len(labels)  # recognized is false
@@ -305,7 +261,7 @@ def dot_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_r
     fn = 0
     for gt_label, rec_label in zip(gt_labels, gt_rec_labels):
         if rec_label == -1:
-            fn += count_dots_lbl(gt_label)
+            fn += _count_dots_lbl(gt_label)
         else:
             res010 = label_tools.int_to_label010(rec_label)
             gt010 = label_tools.int_to_label010(gt_label)
@@ -318,13 +274,13 @@ def dot_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_r
                     tp += 1
     for label, is_false in zip(labels, rec_is_false):
         if is_false:
-            fp += count_dots_lbl(label)
+            fp += _count_dots_lbl(label)
     return tp, fp, fn
 
 
-def char_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_rects, img_fn):
+def _char_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_rects, img_fn, iou_thr: float):
     if do_filter_lonely_rects:
-        boxes, labels = filter_lonely_rects(boxes, labels, img)
+        boxes, labels = _filter_lonely_rects(boxes, labels, img)
     gt_labels = [r[4] for r in gt_rects]
     gt_is_correct = [0] * len(gt_rects)  # recognized label for gt, -1 - missed
     rec_is_false = [1] * len(labels)  # recognized is false
@@ -384,7 +340,8 @@ def char_metrics_rects(boxes, labels, gt_rects, image_wh, img, do_filter_lonely_
     return tp, fp, fn, rec_is_false
 
 
-def validate_model(recognizer, data_list, do_filter_lonely_rects, metrics_for_lines):
+def _validate_model(recognizer: infer_retinanet.BrailleInference, data_list: list, do_filter_lonely_rects: bool,
+                    metrics_for_lines: bool, show_filtered: bool, lang: str, iou_thr: float) -> Dict[str, float]:
     """
     :param recognizer: infer_retinanet.BrailleInference instance
     :param data_list:  list of (image filename, groundtruth pseudotext)
@@ -446,30 +403,31 @@ def validate_model(recognizer, data_list, do_filter_lonely_rects, metrics_for_li
             labels = res_dict["labels"]
             scores = res_dict["scores"]
 
-        tpi, fpi, fni = dot_metrics_rects(
+        tpi, fpi, fni = _dot_metrics_rects(
             boxes=boxes,
             labels=labels,
             gt_rects=res_dict["gt_rects"],
             image_wh=(res_dict["labeled_image"].width, res_dict["labeled_image"].height),
             img=res_dict["labeled_image"],
             do_filter_lonely_rects=do_filter_lonely_rects,
+            iou_thr=iou_thr,
         )
         tp_r += tpi
         fp_r += fpi
         fn_r += fni
 
-        res_text = lines_to_pseudotext(lines)
+        res_text = _lines_to_pseudotext(lines)
         d = Levenshtein.distance(res_text, gt_text)
         sum_d += d
         if len(gt_text):
             sum_d1 += d / len(gt_text)
         sum_len += len(gt_text)
-        tpi, fpi, fni = dot_metrics(res_text, gt_text)
+        tpi, fpi, fni = _dot_metrics(res_text, gt_text)
         tp += tpi
         fp += fpi
         fn += fni
 
-        tpi, fpi, fni, rec_is_false = char_metrics_rects(
+        tpi, fpi, fni, rec_is_false = _char_metrics_rects(
             boxes=boxes,
             labels=labels,
             gt_rects=res_dict["gt_rects"],
@@ -477,6 +435,7 @@ def validate_model(recognizer, data_list, do_filter_lonely_rects, metrics_for_li
             img=res_dict["image"],
             do_filter_lonely_rects=do_filter_lonely_rects,
             img_fn=img_fn,
+            iou_thr=iou_thr,
         )
         tp_c += tpi
         fp_c += fpi
@@ -519,8 +478,9 @@ def validate_model(recognizer, data_list, do_filter_lonely_rects, metrics_for_li
 
 
 def evaluate_accuracy(
-    params_fn, model, device, data_list, do_filter_lonely_rects=False, metrics_for_lines=metrics_for_lines
-):
+        params_fn: str, model: RetinaNet, device: str, data_list: List, do_filter_lonely_rects: bool = False,
+        inference_width: int = 850, metrics_for_lines: bool = False, lang: str = "RU", iou_thr: float = .5
+) -> Dict[str, float]:
     """
     :param recognizer: infer_retinanet.BrailleInference instance
     :param data_list:  list of (image filename, groundtruth pseudotext)
@@ -571,7 +531,7 @@ def evaluate_accuracy(
             boxes = res_dict["boxes"]
             labels = res_dict["labels"]
             # scores = res_dict['scores']
-        tpi, fpi, fni, rec_is_false = char_metrics_rects(
+        tpi, fpi, fni, rec_is_false = _char_metrics_rects(
             boxes=boxes,
             labels=labels,
             gt_rects=res_dict["gt_rects"],
@@ -579,6 +539,7 @@ def evaluate_accuracy(
             img=None,
             do_filter_lonely_rects=do_filter_lonely_rects,
             img_fn=img_fn,
+            iou_thr=iou_thr,
         )
         tp_c += tpi
         fp_c += fpi
@@ -592,14 +553,14 @@ def evaluate_accuracy(
     }
 
 
-def main(table_like_format):
-    # make data list
+def main(table_like_format: bool, verbosity: int, inference_width: int, models: List[Tuple[str, str]],
+         iou_thr: float, do_filter_lonely_rects: bool, metrics_for_lines: bool, show_filtered: bool, lang: str) -> None:
     for m in models:
         print(m)
-    data_set = prepare_data()
+    data_set = prepare_data(validation_datasets)
     prev_model_root = None
 
-    if table_like_format:
+    if table_like_format:  # TODO use pandas.dataFrame
         print(
             "model\tweights\tkey\t"
             "precision\trecall\tf1\t"
@@ -613,7 +574,7 @@ def main(table_like_format):
             else:
                 print()
             prev_model_root = model_root
-        if verbose:
+        if verbosity:
             print("evaluating weights: ", model_weights)
         params_fn = Path(local_config.data_path) / model_root / "param.txt"
         if not params_fn.is_file():
@@ -624,28 +585,26 @@ def main(table_like_format):
             model_weights_fn=os.path.join(local_config.data_path, model_root, model_weights),
             create_script=None,
             inference_width=inference_width,
-            verbose=verbose,
+            verbose=verbosity,
         )
-        assert recognizer.impl.cls_thresh == cls_thresh, (recognizer.impl.cls_thresh, cls_thresh)
+        assert recognizer.impl.cls_thresh == infer_retinanet.cls_thresh, (
+            recognizer.impl.cls_thresh, infer_retinanet.cls_thresh)
         for key, data_list in data_set.items():
-            res = validate_model(
+            res = _validate_model(
                 recognizer,
                 data_list,
                 do_filter_lonely_rects=do_filter_lonely_rects,
                 metrics_for_lines=metrics_for_lines,
+                show_filtered=show_filtered,
+                lang=lang,
+                iou_thr=iou_thr,
             )
-            # print('{model_weights} {key} precision: {res[precision]:.4}, recall: {res[recall]:.4} f1: {res[f1]:.4} '
-            #       'precision_r: {res[precision_r]:.4}, recall_r: {res[recall_r]:.4} f1_r: {res[f1_r]:.4} '
-            #       'd_by_doc: {res[d_by_doc]:.4} d_by_char: {res[d_by_char]:.4} '
-            #       'd_by_char_avg: {res[d_by_char_avg]:.4}'.format(model_weights=model_weights, key=key, res=res))
             if table_like_format:
                 print(
                     "{model}\t{weights}\t{key}\t"
                     "{res[precision_r]:.4}\t{res[recall_r]:.4}\t{res[f1_r]:.4}\t"
                     "{res[precision_c]:.4}\t{res[recall_c]:.4}\t{res[f1_c]:.4}\t"
-                    # '{res[d_by_doc]:.4}\t{res[d_by_char]:.4}\t'
-                    # '{res[d_by_char_avg]:.4}'
-                    .format(model=model_root, weights=model_weights, key=key, res=res)
+                        .format(model=model_root, weights=model_weights, key=key, res=res)
                 )
             else:
                 print(
@@ -657,17 +616,32 @@ def main(table_like_format):
 
 
 if __name__ == "__main__":
-    import time
-
+    # parameters for debugging
+    verbose = 1
     infer_retinanet.SAVE_FOR_PSEUDOLABELS_MODE = 0
-    infer_retinanet.cls_thresh = cls_thresh
-    infer_retinanet.nms_thresh = nms_thresh
-    postprocess.Line.LINE_THR = LINE_THR
-    t0 = time.clock()
-    # for thr in (0.5, 0.6, 0.7, 0.8):
-    #     postprocess.Line.LINE_THR = thr
-    #     print(thr)
-    main(table_like_format=True)
+    infer_retinanet.cls_thresh = .5
+    infer_retinanet.nms_thresh = .02
+    postprocess.Line.LINE_THR = .6
+
+    models_to_validate = [
+        ("weights/run_noaugment_2021_mar_15", "models/best.t7"),
+        ("weights/run_augment_2021_mar_18", "models/best.t7"),
+        ("weights/run_augment_ssl_1iter_2021_mar_20", "models/best.t7"),
+    ]
+
+    validation_datasets = {
+        "DSBI_train": [r"brl_ocr/DSBI/data/train.txt"],
+        "DSBI_test": [r"brl_ocr/DSBI/data/test.txt"],
+        "Angelina_books": [r"brl_ocr/AngelinaDataset/books/val.txt"],
+        "Angelina_handwritten": [r"brl_ocr/AngelinaDataset/handwritten/val.txt"],
+        "Plates": [r"brl_ocr/data/labeled/plates/val.txt"]
+    }
+
+    t0 = time.perf_counter()
+    main(table_like_format=True, verbosity=verbose, inference_width=850, iou_thr=.5,
+         do_filter_lonely_rects=False, metrics_for_lines=False, models=models_to_validate,
+         show_filtered=False, lang="RU")
+
     if verbose >= 2:
         print(
             "decode: ",
@@ -675,4 +649,4 @@ if __name__ == "__main__":
             "impl: ",
             infer_retinanet.impl_t / infer_retinanet.impl_calls,
         )
-        print(time.clock() - t0)
+        print(time.perf_counter() - t0)
