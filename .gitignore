@@ -7,7 +7,6 @@ web_app/static/data/
 
 brl_ocr
 NN_results
-data
 env
 weights/*.t7
 weights/*zuev.txt

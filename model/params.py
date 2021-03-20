@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import local_config
 from ovotools import AttrDict
 
@@ -55,6 +53,9 @@ params = AttrDict(
             "DSBI": [
                 r"brl_ocr/DSBI/data/test.txt",
             ],
+            "plates": [
+                r"brl_ocr/data/labeled/plates/val.txt"
+            ]
         },
         scores_filter=((5, 0.64), (25, 0.81)),  # quantile % : score_threshold
         target_metric="books:f1",
@@ -66,9 +67,13 @@ params = AttrDict(
         ),  # 768*0.8, 1536*1.2  ,550, 1150,   810, 890
         stretch_limit=0.1,
         rotate_limit=5,
+        ShiftScaleRotate=True,
+        Perspective=True,
+        Affine=True,
         # blur_limit = 0,
         # RandomBrightnessContrast = False,
         # JpegCompression = False,
+
     ),
     model="retina",
     model_params=AttrDict(

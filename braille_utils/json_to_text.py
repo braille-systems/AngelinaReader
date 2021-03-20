@@ -9,7 +9,7 @@ import train.data as data
 
 
 def annonation_to_text(json_filename, lang, min_align_score):
-    rects = data.read_LabelMe_annotation(label_filename=json_filename, get_points=False)
+    rects = data.read_labelme_annotation(label_filename=json_filename, get_points=False)
     boxes = [r[:4] for r in rects]
     labels = [r[4] for r in rects]
     scores = [r[5] for r in rects]

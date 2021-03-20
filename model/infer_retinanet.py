@@ -73,9 +73,9 @@ class OrientationAttempts(enum.IntEnum):
     INV_ROT270 = 7
 
 
-class BraileInferenceImpl(torch.nn.Module):
+class BrailleInferenceImpl(torch.nn.Module):
     def __init__(self, params, model, device, label_is_valid, verbose=1):
-        super(BraileInferenceImpl, self).__init__()
+        super(BrailleInferenceImpl, self).__init__()
         self.verbose = verbose
         self.device = device
         if isinstance(model, torch.nn.Module):
@@ -111,14 +111,14 @@ class BraileInferenceImpl(torch.nn.Module):
         # type: (List[Tensor], float)->Tuple[int, Tuple[Tensor, Tensor, Tensor]]
         device = cls_preds[min(orientation_attempts)].device
         stats = [
-            torch.zeros(
-                (
-                    1,
-                    64,
-                ),
-                device=device,
-            )
-        ] * 8
+                    torch.zeros(
+                        (
+                            1,
+                            64,
+                        ),
+                        device=device,
+                    )
+                ] * 8
         for i, cls_pred in enumerate(cls_preds):
             if i in orientation_attempts:
                 scores = cls_pred.sigmoid()
@@ -224,7 +224,6 @@ class BraileInferenceImpl(torch.nn.Module):
         else:
             boxes2, labels2, scores2 = None, None, None
         if self.verbose >= 2:
-
             global decode_calls, decode_t
             decode_calls += 1
             decode_t += time.perf_counter() - t
@@ -235,7 +234,6 @@ class BraileInferenceImpl(torch.nn.Module):
 
 
 class BrailleInference:
-
     DRAW_NONE = 0
     DRAW_ORIGINAL = 1
     DRAW_REFINED = 2
@@ -243,13 +241,13 @@ class BrailleInference:
     DRAW_FULL_CHARS = 4
 
     def __init__(
-        self,
-        params_fn=params_fn,
-        model_weights_fn=model_weights_fn,
-        create_script=None,
-        verbose=1,
-        inference_width=inference_width,
-        device=device,
+            self,
+            params_fn=params_fn,
+            model_weights_fn=model_weights_fn,
+            create_script=None,
+            verbose=1,
+            inference_width=inference_width,
+            device=device,
     ):
         self.verbose = verbose
         params = AttrDict.load(params_fn, verbose=verbose)
@@ -266,11 +264,11 @@ class BrailleInference:
         self.preprocessor = data.ImagePreprocessor(params, mode="inference")
 
         if isinstance(model_weights_fn, torch.nn.Module):
-            self.impl = BraileInferenceImpl(params, model_weights_fn, device, lt.label_is_valid, verbose=verbose)
+            self.impl = BrailleInferenceImpl(params, model_weights_fn, device, lt.label_is_valid, verbose=verbose)
         else:
             model_script_fn = model_weights_fn + ".pth"
             if create_script != False:
-                self.impl = BraileInferenceImpl(params, model_weights_fn, device, lt.label_is_valid, verbose=verbose)
+                self.impl = BrailleInferenceImpl(params, model_weights_fn, device, lt.label_is_valid, verbose=verbose)
                 if create_script is not None:
                     self.impl = torch.jit.script(self.impl)
                 if isinstance(self.impl, torch.jit.ScriptModule):
@@ -306,7 +304,8 @@ class BrailleInference:
             return None
 
     def run(
-        self, img, lang, draw_refined, find_orientation, process_2_sides, align_results, repeat_on_aligned, gt_rects=[]
+            self, img, lang, draw_refined, find_orientation, process_2_sides, align_results, repeat_on_aligned,
+            gt_rects=[]
     ):
         """
         :param img: can be 1) PIL.Image 2) filename to image (.jpg etc.) or .pdf file
@@ -384,7 +383,8 @@ class BrailleInference:
     #     deltas = h * coefs
     #     return boxes + deltas
 
-    def refine_lines(self, lines):
+    @classmethod
+    def refine_lines(cls, lines):
         """
         GVNC. Эмпирическая коррекция получившихся размеров чтобы исправить неточность результатов для последующей разметки
         :param boxes:
@@ -421,7 +421,6 @@ class BrailleInference:
                 input_tensor, input_tensor_rotated, find_orientation=find_orientation, process_2_sides=process_2_sides
             )
         if self.verbose >= 2:
-
             global impl_calls, impl_t
             impl_calls += 1
             impl_t += time.perf_counter() - t
@@ -531,7 +530,8 @@ class BrailleInference:
 
         return results_dict
 
-    def draw_results(self, aug_img, boxes, lines, labels, scores, reverse_page, draw_refined):
+    @classmethod
+    def draw_results(cls, aug_img, boxes, lines, labels, scores, reverse_page, draw_refined):
         suff = ".rev" if reverse_page else ""
         aug_img = copy.deepcopy(aug_img)
         draw = PIL.ImageDraw.Draw(aug_img)
@@ -544,15 +544,15 @@ class BrailleInference:
                 out_text.append("")
             s = ""
             for ch in ln.chars:
-                if ch.char.startswith("~") and not (draw_refined & self.DRAW_FULL_CHARS):
+                if ch.char.startswith("~") and not (draw_refined & cls.DRAW_FULL_CHARS):
                     ch.char = "~?~"
                 s += " " * ch.spaces_before + ch.char
-                if draw_refined & self.DRAW_ORIGINAL:
+                if draw_refined & cls.DRAW_ORIGINAL:
                     ch_box = ch.original_box
                     draw.rectangle(list(ch_box), outline="blue")
-                if (draw_refined & self.DRAW_BOTH) != self.DRAW_ORIGINAL:
+                if (draw_refined & cls.DRAW_BOTH) != cls.DRAW_ORIGINAL:
                     ch_box = ch.refined_box
-                    if draw_refined & self.DRAW_REFINED:
+                    if draw_refined & cls.DRAW_REFINED:
                         draw.rectangle(list(ch_box), outline="green")
                 if ch.char.startswith("~"):
                     draw.text((ch_box[0], ch_box[3]), ch.char, font=fntErr, fill="black")
@@ -566,13 +566,14 @@ class BrailleInference:
             "labeled_image" + suff: aug_img,
             "lines" + suff: lines,
             "text" + suff: out_text,
-            "dict" + suff: self.to_dict(aug_img, lines, draw_refined),
+            "dict" + suff: cls.to_dict(aug_img, lines, draw_refined),
             "boxes" + suff: boxes,
             "labels" + suff: labels,
             "scores" + suff: scores,
         }
 
-    def to_dict(self, img, lines, draw_refined=DRAW_NONE):
+    @classmethod
+    def to_dict(cls, img, lines, draw_refined=DRAW_NONE):
         """
         generates dict for LabelMe json format
         :param img:
@@ -582,7 +583,7 @@ class BrailleInference:
         shapes = []
         for ln in lines:
             for ch in ln.chars:
-                ch_box = ch.refined_box if (draw_refined & self.DRAW_BOTH) != self.DRAW_ORIGINAL else ch.original_box
+                ch_box = ch.refined_box if (draw_refined & cls.DRAW_BOTH) != cls.DRAW_ORIGINAL else ch.original_box
                 shape = {
                     "label": ch.labeling_char if ch.labeling_char else "~" + lt.int_to_label123(ch.label),
                     "points": [[ch_box[0], ch_box[1]], [ch_box[2], ch_box[3]]],
@@ -604,7 +605,8 @@ class BrailleInference:
         }
         return res
 
-    def save_results(self, result_dict, reverse_page, results_dir, filename_stem, save_development_info):
+    @classmethod
+    def save_results(cls, result_dict, reverse_page, results_dir, filename_stem, save_development_info):
         suff = ".rev" if reverse_page else ""
         if save_development_info and not reverse_page:
             labeled_image_filename = filename_stem + ".labeled" + suff + ".jpg"
@@ -623,19 +625,19 @@ class BrailleInference:
         return str(marked_image_path), str(recognized_text_path), result_dict["text" + suff]
 
     def run_and_save(
-        self,
-        img,
-        results_dir,
-        target_stem,
-        lang,
-        extra_info,
-        draw_refined,
-        remove_labeled_from_filename,
-        find_orientation,
-        align_results,
-        process_2_sides,
-        repeat_on_aligned,
-        save_development_info=True,
+            self,
+            img,
+            results_dir,
+            target_stem,
+            lang,
+            extra_info,
+            draw_refined,
+            remove_labeled_from_filename,
+            find_orientation,
+            align_results,
+            process_2_sides,
+            repeat_on_aligned,
+            save_development_info=True,
     ):
         """
         :param img: can be 1) PIL.Image 2) filename to image (.jpg etc.) or .pdf file
@@ -690,18 +692,18 @@ class BrailleInference:
         return results
 
     def process_dir_and_save(
-        self,
-        img_filename_mask,
-        results_dir,
-        lang,
-        extra_info,
-        draw_refined,
-        remove_labeled_from_filename,
-        find_orientation,
-        process_2_sides,
-        align_results,
-        repeat_on_aligned,
-        save_development_info=True,
+            self,
+            img_filename_mask,
+            results_dir,
+            lang,
+            extra_info,
+            draw_refined,
+            remove_labeled_from_filename,
+            find_orientation,
+            process_2_sides,
+            align_results,
+            repeat_on_aligned,
+            save_development_info=True,
     ):
         if os.path.isfile(img_filename_mask) and os.path.splitext(img_filename_mask)[1] == ".txt":
             list_file = os.path.join(local_config.data_path, img_filename_mask)
@@ -742,18 +744,18 @@ class BrailleInference:
         return result_list
 
     def process_archive_and_save(
-        self,
-        arch_path,
-        results_dir,
-        lang,
-        extra_info,
-        draw_refined,
-        remove_labeled_from_filename,
-        find_orientation,
-        align_results,
-        process_2_sides,
-        repeat_on_aligned,
-        save_development_info=True,
+            self,
+            arch_path,
+            results_dir,
+            lang,
+            extra_info,
+            draw_refined,
+            remove_labeled_from_filename,
+            find_orientation,
+            align_results,
+            process_2_sides,
+            repeat_on_aligned,
+            save_development_info=True,
     ):
         arch_name = Path(arch_path).name
         result_list = list()
