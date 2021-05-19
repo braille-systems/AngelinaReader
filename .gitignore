@@ -1,3 +1,6 @@
+env
+weights/model.t7
+
 .ipynb_checkpoints/
 .idea/
 *.pyc

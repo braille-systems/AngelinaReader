@@ -19,7 +19,7 @@ parser.add_argument('results_dir', nargs='?', type=str, help='(Optional) output 
 parser.add_argument('-l', '--lang', type=str, default='RU', help='(Optional) Document language (RU, EN, LV, GR or UZ). If not specified, is RU')
 parser.add_argument('-o', '--orient', action='store_false', help="Don't find orientation, use original file orientation")
 parser.add_argument('-2', dest='two', action='store_true', help="Process 2 sides")
-
+parser.add_argument('--save_dev', action='store_true', help="Save development info")
 args = parser.parse_args()
 
 if not Path(args.input).exists():
@@ -33,37 +33,50 @@ recognizer = infer_retinanet.BrailleInference(
 
 if Path(args.input).is_dir():
     results_dir = args.results_dir or args.input
-    recognizer.process_dir_and_save(str(Path(args.input)/'**'/'*.*'), results_dir,
-                                    lang=args.lang, extra_info=None,
-                                    draw_refined=recognizer.DRAW_NONE,
-                                    remove_labeled_from_filename=False,
-                                    find_orientation=args.orient,
-                                    align_results=True,
-                                    process_2_sides=args.two,
-                                    repeat_on_aligned=False,
-                                    save_development_info=False)
+    recognizer.process_dir_and_save(
+        str(Path(args.input) / "**" / "*.*"),
+        results_dir,
+        lang=args.lang,
+        extra_info=None,
+        draw_refined=recognizer.DRAW_NONE,
+        remove_labeled_from_filename=False,
+        find_orientation=args.orient,
+        align_results=True,
+        process_2_sides=args.two,
+        repeat_on_aligned=False,
+        save_development_info=args.save_dev,
+    )
 else:
     results_dir = args.results_dir or Path(args.input).parent
-    if Path(args.input).suffix == '.zip':
-        recognizer.process_archive_and_save(args.input, results_dir,
-                                               lang=args.lang, extra_info=None,
-                                               draw_refined=recognizer.DRAW_NONE,
-                                               remove_labeled_from_filename=False,
-                                               find_orientation=args.orient,
-                                               align_results=True,
-                                               process_2_sides=args.two,
-                                               repeat_on_aligned=False,
-                                               save_development_info=False)
-    elif Path(args.input).suffix in ('.jpg', '.jpe', '.jpeg', '.png', '.gif', '.svg', '.bmp'):
-        recognizer.run_and_save(args.input, results_dir, target_stem=None,
-                                               lang=args.lang, extra_info=None,
-                                               draw_refined=recognizer.DRAW_NONE,
-                                               remove_labeled_from_filename=False,
-                                               find_orientation=args.orient,
-                                               align_results=True,
-                                               process_2_sides=args.two,
-                                               repeat_on_aligned=False,
-                                               save_development_info=False)
+    if Path(args.input).suffix == ".zip":
+        recognizer.process_archive_and_save(
+            args.input,
+            results_dir,
+            lang=args.lang,
+            extra_info=None,
+            draw_refined=recognizer.DRAW_NONE,
+            remove_labeled_from_filename=False,
+            find_orientation=args.orient,
+            align_results=True,
+            process_2_sides=args.two,
+            repeat_on_aligned=False,
+            save_development_info=args.save_dev,
+        )
+    elif Path(args.input).suffix.lower() in (".jpg", ".jpe", ".jpeg", ".png", ".gif", ".svg", ".bmp"):
+        recognizer.run_and_save(
+            args.input,
+            results_dir,
+            target_stem=None,
+            lang=args.lang,
+            extra_info=None,
+            draw_refined=recognizer.DRAW_NONE,
+            remove_labeled_from_filename=False,
+            find_orientation=args.orient,
+            align_results=True,
+            process_2_sides=args.two,
+            repeat_on_aligned=False,
+            save_development_info=args.save_dev,
+        )
     else:
         print('Incorrect file extention: ' + Path(args.input).suffix + ' . Only images, .pdf and .zip files allowed')
         exit()
