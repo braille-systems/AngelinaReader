@@ -202,7 +202,8 @@ def interpret_line_RU(line, lang, mode = None):
                 ):
                     if lt.int_to_letter(ch.label, ['MATH_RU']) in {'en', 'EN'}:
                         math_lang = lt.int_to_letter(ch.label, ['MATH_RU'])
-                        ch.char = '*'
+                        ch.char = '■'
+                        ch.labeling_char = 'ERR'
             if math_mode and ch.char is None:
                 frac_mode = False
                 if not math_lang and (ch.spaces_before or lt.int_to_letter(ch.label, ['MATH_RU']) == '..'):
@@ -243,8 +244,8 @@ def interpret_line_RU(line, lang, mode = None):
                 ch.char = ']'
                 brackets_on['['] -= 1
             if ch.char is None:
-                ch.labeling_char = '~' + lt.int_to_label123(ch.label)
-                ch.char = ch.labeling_char + '~'
+                ch.char = '■'
+                ch.labeling_char = 'ERR'
             if caps_mode:
                 ch.char = ch.char.upper()
                 caps_mode = False
