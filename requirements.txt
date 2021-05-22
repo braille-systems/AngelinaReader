@@ -13,4 +13,8 @@ wtforms==2.2.1
 scikit-build
 albumentations==0.4.5
 PyMuPDF==1.17.5
--e git+https://github.com/IlyaOvodov/OvoTools.git@asi#egg=OvoTools
+-e git+https://github.com/braille-systems/OvoTools.git#egg=OvoTools
+
+pytorch-ignite==0.4.4
+tensorboardX==2.2
+Levenshtein==0.12.0

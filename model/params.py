@@ -4,7 +4,7 @@ from ovotools import AttrDict
 settings = AttrDict(
     max_epochs=100000,
     tensorboard_port=6006,
-    device='cuda:3',
+    device='cuda:0',
     findLR=False,
     can_overwrite=False,
 )
@@ -15,18 +15,24 @@ params = AttrDict(
     data = AttrDict(
         get_points = False,
         class_as_6pt=False,    # классификация присутствия каждой точки в рамке отдельно
-        batch_size = 12,
+        batch_size = 6,
         net_hw = (416, 416),
         rect_margin = 0.3, #  every of 4 margions to char width
         max_std = 0.1,
-        train_list_file_names = [
-            #r'DSBI/data/val_li2.txt',
-            r'DSBI/data/train_li2.txt',
+        train_list_file_names=[
+            r"brl_ocr/DSBI/data/train.txt",
+            r"brl_ocr/AngelinaDataset/books/train.txt",
+            r"brl_ocr/AngelinaDataset/handwritten/train.txt",
+            r"brl_ocr/AngelinaDataset/not_braille/train.txt",
+            r"../data/3_pseudolabeled/train.txt",
         ],
-        val_list_file_names = {
-            'val' :  [r'DSBI/data/val_li2.txt',],
-            'test' :  [r'DSBI/data/test_li2.txt',]
-        }
+        val_list_file_names={
+            "val": [
+                r"brl_ocr/AngelinaDataset/books/val.txt",
+                r"brl_ocr/AngelinaDataset/books/val.txt",
+                r"brl_ocr/DSBI/data/test.txt",
+            ],
+        },
     ),
     augmentation = AttrDict(
         img_width_range=( 810, 890, ),  # 768*0.8, 1536*1.2

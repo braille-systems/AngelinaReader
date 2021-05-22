@@ -82,6 +82,8 @@ def human_label_to_int(label):
     '''
     Convert label from manual annotations to int_label
     '''
+    if label is None:
+        return 0  # TODO throw away this label?
     label = label.lower()
     if label[0] == '~':
         label123 = label[1:]
@@ -93,7 +95,8 @@ def human_label_to_int(label):
         if not ch_list:
             raise ValueError("unrecognized label: " + label)
         if len(ch_list) > 1:
-            raise ValueError("label: " + label + " has more then 1 meanings: " + str(ch_list))
+            pass  # TODO
+            # raise ValueError("label: " + label + " has more then 1 meanings: " + str(ch_list))
         label123 = list(ch_list)[0]
     return label123_to_int(label123)
 
