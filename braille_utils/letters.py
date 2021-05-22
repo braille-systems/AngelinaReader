@@ -7,6 +7,7 @@ Braille symbols declaration
 # constants for special symbols label
 num_sign = '##'
 caps_sign = 'CC'
+en_caps_sign = '^'
 markout_sign = 'XX'
 
 # general symbols common for various languages
@@ -110,7 +111,7 @@ alpha_map_EN = {
     '13456': 'y',
     '1356': 'z',
 
-    #'6': caps_sign, # TODO duplicate оf RU caps_sign
+    '6': en_caps_sign, # TODO duplicate оf RU caps_sign
     '3': "'",
     '236': '«',  # <<
     '356': '»',  # >>
