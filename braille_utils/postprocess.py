@@ -149,7 +149,7 @@ def interpret_line_RU(line, lang, mode = None):
     for i, ch in enumerate(line.chars):
         ch.labeling_char = ch.char = lt.int_to_letter(ch.label, ['SYM'])
         if ch.char == letters.markout_sign:
-            ch.char = ''
+            ch.char = '@'  # TODO only when save_dev
             if i < len(line.chars)-1:
                 line.chars[i+1].spaces_before += ch.spaces_before
                 ch.spaces_before = 0
