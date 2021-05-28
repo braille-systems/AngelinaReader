@@ -9,27 +9,23 @@ inference_width = 850
 verbose = 0
 
 models = [
-    #('NN_results/dsbi_tst_as_fcdca3_c63909', 'models/clr.099.t7'),
-    #
-    ('NN_results/dsbi_lay3_c4ca62', 'models/clr.005.t7'),
-    ('NN_results/dsbi_lay3_c4ca62', 'models/clr.006.t7'),
+    ('NN_results/just_dsbi_and_angelina_300iter', 'models/best.t7'),
+    ('NN_results/just_dsbi_and_angelina_attempt2_300iter', 'models/best.t7'),
+    ('NN_results/with_corrected_pseudo_fix1_200iter', 'models/best.t7'),
+    ('NN_results/with_pseudo_notfiltered_notcorrected_282iter', 'models/best.t7'),
+    ('NN_results/with_corrected_pseudo_bad_282iter', 'models/best.t7'),
+    ('NN_results/with_filtered_pseudo_300iter', 'models/best.t7'),
 ]
 
 model_dirs = [
 ]
 
 datasets = {
-    # 'DSBI_train': [
-    #                 r'DSBI\data\train.txt',
-    #              ],
-    # 'DSBI_test': [
-    #                 r'DSBI\data\test.txt',
-    #               ],
-    'val': [r'DSBI/data/val_li2.txt', ],
-    'test': [r'DSBI/data/test_li2.txt', ],
+    "dsbi": [{"path": r"brl_ocr/DSBI/data/test.txt", "lang": "RU"}],
+    "ang_books": [{"path": r"brl_ocr/AngelinaDataset/books/val.txt", "lang": "RU"}, ],
+    "ang_written": [{"path": r"brl_ocr/AngelinaDataset/handwritten/val.txt", "lang": "RU"}, ],
+    "big_data_corrected": [{"path": r"../data/9a_corrected/unused.txt", "lang": "EN"}, ],
 }
-
-lang = 'RU'
 
 import os
 import sys
@@ -54,16 +50,22 @@ for md in model_dirs:
         for m in (Path(local_config.data_path)/md[0]).glob(md[1])
     ]
 
-def prepare_data(datasets=datasets):
+def prepare_data(datasets):
     """
     data (datasets defined above as global) -> dict: key - list of dict (image_fn":full image filename, "gt_text": groundtruth pseudotext, "gt_rects": groundtruth rects + label 0..64)
     :return:
     """
     res_dict = dict()
-    for key, list_file_names in datasets.items():
+    for key, list_file_infos in datasets.items():
         data_list = list()
         res_dict[key] = data_list
-        for list_file_name in list_file_names:
+        for list_file_info in list_file_infos:
+            if isinstance(list_file_info, dict):
+                list_file_name = list_file_info["path"]
+                lang = list_file_info["lang"]
+            else:
+                list_file_name = list_file_info
+                lang = "RU"
             list_file = os.path.join(local_config.data_path, list_file_name)
             data_dir = os.path.dirname(list_file)
             with open(list_file, 'r') as f:
@@ -103,7 +105,7 @@ def prepare_data(datasets=datasets):
                         labels = [r[4] for r in rects]
                         lines = postprocess.boxes_to_lines(boxes, labels, lang=lang)
                         gt_text = lines_to_pseudotext(lines)
-                        data_list.append({"image_fn":full_fn, "gt_text": gt_text, "gt_rects": rects})
+                        data_list.append({"image_fn":full_fn, "gt_text": gt_text, "gt_rects": rects, "lang": lang})
     return res_dict
 
 
@@ -394,7 +396,7 @@ def validate_model(recognizer, data_list, do_filter_lonely_rects, metrics_for_li
     fn_c = 0
 
     for gt_dict in data_list:
-        img_fn, gt_text, gt_rects = gt_dict['image_fn'], gt_dict['gt_text'], gt_dict['gt_rects']
+        img_fn, gt_text, gt_rects, lang = gt_dict['image_fn'], gt_dict['gt_text'], gt_dict['gt_rects'], gt_dict["lang"]
         res_dict = recognizer.run(img_fn,
                                   lang=lang,
                                   draw_refined=infer_retinanet.BrailleInference.DRAW_NONE,
@@ -490,7 +492,7 @@ def evaluate_accuracy(params_fn, model, device, data_list, do_filter_lonely_rect
     fp_c = 0
     fn_c = 0
     for gt_dict in data_list:
-        img_fn, gt_text, gt_rects = gt_dict['image_fn'], gt_dict['gt_text'], gt_dict['gt_rects']
+        img_fn, gt_text, gt_rects, lang = gt_dict['image_fn'], gt_dict['gt_text'], gt_dict['gt_rects'], gt_dict["lang"]
         res_dict = recognizer.run(img_fn,
                                   lang=lang,
                                   draw_refined=infer_retinanet.BrailleInference.DRAW_NONE,
@@ -529,7 +531,7 @@ def main(table_like_format):
     # make data list
     for m in models:
         print(m)
-    data_set = prepare_data()
+    data_set = prepare_data(datasets=datasets)
     prev_model_root = None
 
     if table_like_format:

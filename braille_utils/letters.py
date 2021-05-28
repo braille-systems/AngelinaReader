@@ -25,7 +25,6 @@ sym_map = {
     '34' : '/',
     '3456': num_sign,
     '123456': markout_sign,
-    '3': '‘',  # apostrophe
     # '6': "en",
     # '46': "EN",  # TODO only for Russian ?
 }
