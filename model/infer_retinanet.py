@@ -388,7 +388,8 @@ class BrailleInference:
         if draw:
             results_dict.update(self.draw_results(aug_img, boxes, lines, labels, scores, False, draw_refined))
             if improve_lines:
-                spellchecker = RecognitionSpellchecker(Path("TODO.json"), Path("TODO.csv"))
+                spellchecker = RecognitionSpellchecker(Path("TODO.json"),
+                                                       Path(__file__).parent / "substitutions_counts_en.csv")
                 lines_improved = spellchecker.improve(lines=lines)
                 results_dict.update(
                     self.draw_results(aug_img, boxes, lines_improved, labels, scores, False, draw_refined,
