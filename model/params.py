@@ -4,7 +4,7 @@ from ovotools import AttrDict
 settings = AttrDict(
     max_epochs=100000,
     tensorboard_port=6006,
-    device='cuda:3',
+    device='cuda:0',
     findLR=False,
     can_overwrite=False,
 )
@@ -15,17 +15,17 @@ params = AttrDict(
     data = AttrDict(
         get_points = False,
         class_as_6pt=False,    # классификация присутствия каждой точки в рамке отдельно
-        batch_size = 12,
+        batch_size = 6, # with batch size 12 my GPU runs out of memory
         net_hw = (416, 416),
         rect_margin = 0.3, #  every of 4 margions to char width
         max_std = 0.1,
         train_list_file_names = [
             #r'DSBI/data/val_li2.txt',
-            r'DSBI/data/train_li2.txt',
+            r'DSBI/data/train.txt',
         ],
         val_list_file_names = {
-            'val' :  [r'DSBI/data/val_li2.txt',],
-            'test' :  [r'DSBI/data/test_li2.txt',]
+            'val' :  [r'DSBI/data/test.txt',],
+            'test' :  [r'DSBI/data/test.txt',]
         }
     ),
     augmentation = AttrDict(
